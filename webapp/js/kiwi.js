@@ -153,7 +153,7 @@ function setupUI() {
             }
 
             // opendlv_proxy_VoltageReading
-            if (data.dataType == 1037) {
+            if (1037 == data.dataType) {
 //                var distance = 12.174 * Math.pow(data.opendlv_proxy_VoltageReading.voltage * (3.0 / 4096.0), -1.051) / 100.0;
                 var distance = 12.174 * Math.pow(data.opendlv_proxy_VoltageReading.voltage * (4095.0 * 3.0 / 4096.0), -1.051);
                 distance = (distance > 100.0) ? 100.0 : distance;
@@ -183,7 +183,7 @@ function setupUI() {
             }
 
             // opendlv_proxy_DistanceReading
-            if (data.dataType == 1039) {
+            if (1039 == data.dataType) {
                 var distance = data.opendlv_proxy_DistanceReading.distance * 100.0;
                 distance = (distance > 100.0) ? 100.0 : distance;
 
@@ -212,7 +212,7 @@ function setupUI() {
             }
 
             // opendlv_proxy_ImageReading
-            if (data.dataType == 1055) {
+            if ( (1055 == data.dataType) && (0 == data.senderStamp) ) {
                 // Mapping function to make wide chars to regular bytes.
                 strToAB = str =>
                  new Uint8Array(str.split('')
