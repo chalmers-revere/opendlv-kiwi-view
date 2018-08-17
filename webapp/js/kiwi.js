@@ -154,8 +154,9 @@ function setupUI() {
 
             // opendlv_proxy_VoltageReading
             if (1037 == data.dataType) {
-                var distance = 1.0 / (data.opendlv_proxy_VoltageReading.voltage / 10.13) - 3.8;
-                distance /= 100.0;
+//                var distance = 12.174 * Math.pow(data.opendlv_proxy_VoltageReading.voltage * (3.0 / 4096.0), -1.051) / 100.0;
+                var distance = 12.174 * Math.pow(data.opendlv_proxy_VoltageReading.voltage * (4095.0 * 3.0 / 4096.0), -1.051);
+                distance = (distance > 100.0) ? 100.0 : distance;
 
                 var sensor = 0;
                 var sensorOffset = 0;
@@ -386,39 +387,80 @@ function setupUI() {
     }
 
     ////////////////////////////////////////////////////////////////////////////
-    var g_updateFromCodeCounter = 0;
-    var g_oldCode = "";
     function updateFromCode() {
-        // Restrict code update to every 3s but only on change.
-        g_updateFromCodeCounter++;
-        if (0 != (g_updateFromCodeCounter%30)) {
-            return;
-        }
-        g_updateFromCodeCounter = 0;
+        const perception = g_perception;
 
-        // Send Python code to OD4 session.
+        var actuation = { motor : 0,
+                          steering : 0
+        };
+
+        // Run user's code.
         var editor = ace.edit("editor");
         var code = editor.getValue();
-        if (g_oldCode == code) {
-            return;
+        eval(code);
+
+        var envPedalPositionRequest;
+        var envGroundSteeringRequest;
+        var envActuationRequest;
+
+        // Values for Kiwi.
+        var minSteering = 0; // Number(document.getElementById("minSteering").value)
+        var maxSteering = 38; // Number(document.getElementById("maxSteering").value)
+        var maxAcceleration = 25; // Number(document.getElementById("maxAcceleration").value)
+        var maxDeceleration = 100; // Number(document.getElementById("maxDeceleration").value)
+
+        var steering = 0;
+        var gasPedalPosition = 0;
+        var brakePedalPosition = 0;
+
+        // Support for PedalPositionRequest & GroundSteeringRequest.
+        {
+            gasPedalPosition = Math.floor(Math.min(actuation.motor, maxAcceleration/100.0)*100.0)/100.0;
+            brakePedalPosition = Math.floor(Math.max(actuation.motor, maxAcceleration/-100.0)*100.0)/100.0;
+
+            var pedalPositionRequest = "{\"position\":" + (actuation.motor > 0 ? gasPedalPosition : brakePedalPosition) + "}";
+            envPedalPositionRequest = g_libcluon.encodeEnvelopeFromJSONWithSampleTimeStamp(pedalPositionRequest, 1086 /* message identifier */, 0 /* sender stamp */);
+
+
+            steering = actuation.steering;
+            if (steering < -maxSteering*Math.PI/180.0) {
+                steering = -maxSteering*Math.PI/180.0;
+            }
+            else if (steering > maxSteering*Math.PI/180.0) {
+                steering = maxSteering*Math.PI/180.0;
+            }
+            steering = Math.floor(steering*100.0)/100.0;
+
+            var groundSteeringRequest = "{\"groundSteering\":" + steering + "}";
+            envGroundSteeringRequest = g_libcluon.encodeEnvelopeFromJSONWithSampleTimeStamp(groundSteeringRequest, 1090 /* message identifier */, 0 /* sender stamp */);
         }
 
-        var codeInBase64 = window.btoa(code);
-        var systemOperationState = "{\"code\":0,\"description\":\"" + codeInBase64 + "\"}";
-        envSystemOperationState = g_libcluon.encodeEnvelopeFromJSONWithSampleTimeStamp(systemOperationState, 1101 /* message identifier */, 0 /* sender stamp */);
+        // Disable support for legacy ActuationRequest.
+        {
+            var actuationRequest = "{\"acceleration\":0,\"steering\":0,\"isValid\":false}";
+            envActuationRequest = g_libcluon.encodeEnvelopeFromJSONWithSampleTimeStamp(actuationRequest, 160 /* message identifier */, 0 /* sender stamp */);
 
-        var pythonCodeCommand = "{\"pythoncode\":" +
+//            strToAB = str =>
+//              new Uint8Array(str.split('')
+//                .map(c => c.charCodeAt(0))).buffer;
+
+// Instead of sending the raw bytes, we encapsulate them into a JSON object.
+//            ws.send(strToAB(output), { binary: true });
+        }
+
+        var actuationCommands = "{\"virtualjoystick\":" +
                                     "{" +
-                                        "\"systemOperationState\":" + "\"" + window.btoa(envSystemOperationState) + "\"" +
+                                        "\"pedalPositionRequest\":" + "\"" + window.btoa(envPedalPositionRequest) + "\"," +
+                                        "\"groundSteeringRequest\":" + "\"" + window.btoa(envGroundSteeringRequest) + "\"," +
+                                        "\"actuationRequest\":" + "\"" + window.btoa(envActuationRequest) + "\"" +
                                     "}" +
                                 "}";
-        if (g_sendFromCode) {
-console.log(pythonCodeCommand);
-            g_ws.send(pythonCodeCommand);
-            g_oldCode = code;
 
-            $("#steering").html("-");
-            $("#motor").html("-");
+        if (g_sendFromCode) {
+            g_ws.send(actuationCommands);
+
+            $("#steering").html(steering);
+            $("#motor").html((gasPedalPosition > 0 ? gasPedalPosition : brakePedalPosition));
         }
     }
 

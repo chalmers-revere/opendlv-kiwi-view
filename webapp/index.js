@@ -316,14 +316,6 @@ g_ws.on('connection', function connection(conn) {
                         g_liveOD4Session.send(envGroundSteeringRequest, 12175, '225.0.0.' + LIVE_OD4SESSION_CID);
                         g_liveOD4Session.send(envActuationRequest, 12175, '225.0.0.' + LIVE_OD4SESSION_CID);
                     }
-                    if ('pythoncode' == key) {
-                        // Unpack Python source code...
-                        var envSystemOperationState = Buffer.from(data.pythoncode.systemOperationState, 'base64');
-
-                        // ...and forward command to live and playback OD4Sessions.
-                        g_liveOD4Session.send(envSystemOperationState, 12175, '225.0.0.' + LIVE_OD4SESSION_CID);
-                        g_playbackOD4Session.send(envSystemOperationState, 12175, '225.0.0.' + PLAYBACK_OD4SESSION_CID);
-                    }
                 });
             }
         }
