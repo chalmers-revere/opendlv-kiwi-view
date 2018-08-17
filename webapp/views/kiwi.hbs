@@ -306,17 +306,11 @@
             <br>
             <br>
             <br>
-            <div id="editor">// Access sensor values.
-const frontSensor = perception.front;
-const rearSensor = perception.rear;
-const leftSensor = perception.left;
-const rightSensor = perception.right;
-
-// TODO: Add some logic here.
-
-// Set values to access Kiwi's motor and steering.
-actuation.motor = 0;
-actuation.steering = 0.3;
+            <div id="editor">// Simple Python example.
+x = 1
+if x == 1:
+    # indented four spaces
+    print("x is 1.")
 </div>
         </div>
     </div>
@@ -336,7 +330,7 @@ actuation.steering = 0.3;
     <script>
         var editor = ace.edit("editor");
         editor.setTheme("ace/theme/eclipse");
-        editor.session.setMode("ace/mode/javascript");
+        editor.session.setMode("ace/mode/python");
     </script>
 
 
