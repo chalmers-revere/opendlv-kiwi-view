@@ -154,9 +154,8 @@ function setupUI() {
 
             // opendlv_proxy_VoltageReading
             if (1037 == data.dataType) {
-//                var distance = 12.174 * Math.pow(data.opendlv_proxy_VoltageReading.voltage * (3.0 / 4096.0), -1.051) / 100.0;
-                var distance = 12.174 * Math.pow(data.opendlv_proxy_VoltageReading.voltage * (4095.0 * 3.0 / 4096.0), -1.051);
-                distance = (distance > 100.0) ? 100.0 : distance;
+                var distance = 1.0 / (data.opendlv_proxy_VoltageReading.voltage / 10.13) - 3.8;
+                distance /= 100.0;
 
                 var sensor = 0;
                 var sensorOffset = 0;
@@ -197,13 +196,29 @@ function setupUI() {
                     sensorOffset = USfrontOffset;
                     g_perception.front = distance;
                 }
-                else if (1 == data.senderStamp) {
+                else if (2 == data.senderStamp) {
                     // Ultrasound rear.
                     const USrear = 1;
                     const USrearOffset = 5;
                     sensor = USrear;
                     sensorOffset = USrearOffset;
                     g_perception.rear = distance;
+                }
+                else if (1 == data.senderStamp) {
+                    // IR left.
+                    const IRleft = 2;
+                    const IRleftOffset = 8;
+                    sensor = IRleft;
+                    sensorOffset = IRleftOffset;
+                    g_perception.left = distance;
+                }
+                else if (3 == data.senderStamp) {
+                    // IR right.
+                    const IRright = 3;
+                    const IRrightOffset = 2;
+                    sensor = IRright;
+                    sensorOffset = IRrightOffset;
+                    g_perception.right = distance;
                 }
                 sensorView.chart.data.datasets[sensor].data[(sensorOffset+0)%12] = distance;
                 sensorView.chart.data.datasets[sensor].data[(sensorOffset+1)%12] = distance;
