@@ -556,7 +556,7 @@ function updateSendingButtons() {
         var envGroundSteeringRequest = g_libcluon.encodeEnvelopeFromJSONWithSampleTimeStamp(groundSteeringRequest, 1090 /* message identifier */, 0 /* sender stamp */);
 
         var pedalPositionRequest = "{\"position\":0}";
-        var envPedalPositionRequest = g_libcluon.encodeEnvelopeFromJSONWithSampleTimeStamp(pedalPositionRequest, 1086 /* message identifier */, 1 /* sender stamp */);
+        var envPedalPositionRequest = g_libcluon.encodeEnvelopeFromJSONWithSampleTimeStamp(pedalPositionRequest, 1086 /* message identifier */, 0 /* sender stamp */);
 
         var actuationCommands = "{\"virtualjoystick\":" +
                                     "{" +
